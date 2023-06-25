@@ -1,39 +1,36 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { experimental_useEffectEvent as useEffectEvent } from 'react';
 
 export function useFadeIn(ref, duration) {
-  useEffect(() => {
-    const node = ref.current;
+  const [isRunning, setIsRunning] = useState(true);
 
-    let startTime = performance.now();
+  useAnimationLoop(isRunning, (timePassed) => {
+    const progress = Math.min(timePassed / duration, 1);
+    ref.current.style.opacity = progress;
+    if (progress === 1) {
+      setIsRunning(false);
+    }
+  });
+}
+
+function useAnimationLoop(isRunning, drawFrame) {
+  const onFrame = useEffectEvent(drawFrame);
+
+  useEffect(() => {
+    if (!isRunning) {
+      return;
+    }
+
+    const startTime = performance.now();
     let frameId = null;
 
-    function onFrame(now) {
+    function tick(now) {
       const timePassed = now - startTime;
-      const progress = Math.min(timePassed / duration, 1);
-      onProgress(progress);
-      if (progress < 1) {
-        // We still have more frames to paint
-        frameId = requestAnimationFrame(onFrame);
-      }
+      onFrame(timePassed);
+      frameId = requestAnimationFrame(tick);
     }
 
-    function onProgress(progress) {
-      node.style.opacity = progress;
-    }
-
-    function start() {
-      onProgress(0);
-      startTime = performance.now();
-      frameId = requestAnimationFrame(onFrame);
-    }
-
-    function stop() {
-      cancelAnimationFrame(frameId);
-      startTime = null;
-      frameId = null;
-    }
-
-    start();
-    return () => stop();
-  }, [ref, duration]);
+    tick();
+    return () => cancelAnimationFrame(frameId);
+  }, [isRunning]);
 }
