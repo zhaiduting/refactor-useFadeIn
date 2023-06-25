@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { experimental_useEffectEvent as useEffectEvent } from 'react';
+import { useState, useEffect } from "react";
+import { experimental_useEffectEvent as useEffectEvent } from "react";
 
 export function useFadeIn(ref, duration) {
   const [isRunning, setIsRunning] = useState(true);
@@ -22,7 +22,7 @@ function useAnimationLoop(isRunning, drawFrame) {
     }
 
     const startTime = performance.now();
-    let frameId = null;
+    let frameId = requestAnimationFrame(tick);
 
     function tick(now) {
       const timePassed = now - startTime;
@@ -30,7 +30,7 @@ function useAnimationLoop(isRunning, drawFrame) {
       frameId = requestAnimationFrame(tick);
     }
 
-    tick();
+    // tick();
     return () => cancelAnimationFrame(frameId);
   }, [isRunning]);
 }
